@@ -194,7 +194,6 @@ class YoutubeChannel:
 
 
 class YoutubeFinder:
-
     def __init__(self, developer_key, dump_dir=None, logger=None):
         self._logger = logger if logger else logging
         self._api = YoutubeAPI(developer_key, dump_dir=dump_dir, logger=self._logger)
@@ -211,9 +210,14 @@ class YoutubeFinder:
         channels = []
         for channel in items:
             snippet = channel['snippet']
-            channels.append(YoutubeChannel(snippet['title'],
-                snippet['description'], channel['id'],
-                snippet['thumbnails']['medium']['url']))
+            channels.append(
+                    YoutubeChannel(
+                        snippet['title'],
+                        snippet['description'],
+                        channel['id'],
+                        snippet['thumbnails']['medium']['url']
+                    )
+            )
         return channels
 
     def get_channel(self, channel_id):
@@ -229,13 +233,18 @@ class YoutubeFinder:
                 search_query=search_query, duration=duration,
                 published_before=published_before,
                 published_after=published_after, event_type=event_type)
-        videos = [ 
-                YoutubeVideo(v['snippet']['title'], v['snippet']['description'],
+        videos = [
+            YoutubeVideo(
+                v['snippet']['title'],
+                v['snippet']['description'],
                 v['snippet']['thumbnails']['medium']['url'],
-                v['id']['videoId'], published_at=v['snippet']['publishedAt'],
+                v['id']['videoId'],
+                published_at=v['snippet']['publishedAt'],
                 live_broadcast=v['snippet']['liveBroadcastContent'],
-                channel_id=v['snippet']['channelId'])
-                for v in response_items]
+                channel_id=v['snippet']['channelId']
+            )
+            for v in response_items
+        ]
         return videos
 
     def get_videos(self, channel_id="", search_query="", duration=None, published_before=None,
@@ -254,12 +263,16 @@ class YoutubeFinder:
         # get detail information for each video
         video_items = self._api.videos_all(video_ids=video_ids)
         videos = [
-            YoutubeVideo(v['snippet']['title'], v['snippet']['description'],
-                v['snippet']['thumbnails']['medium']['url'], v['id'],
+            YoutubeVideo(
+                v['snippet']['title'],
+                v['snippet']['description'],
+                v['snippet']['thumbnails']['medium']['url'],
+                v['id'],
                 duration=v['contentDetails']['duration'],
                 published_at=v['snippet']['publishedAt'],
                 live_broadcast=v['snippet']['liveBroadcastContent'],
-                channel_id=v['snippet']['channelId'])
-                for v in video_items]
+                channel_id=v['snippet']['channelId']
+            )
+            for v in video_items
+        ]
         return videos
-
