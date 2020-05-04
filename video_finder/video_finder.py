@@ -15,12 +15,15 @@ class YoutubeAPIException(Exception):
 class YoutubeAPI:
     BASE_URL = "https://www.googleapis.com/youtube/v3/"
     DUMP_FILE_NAME = ".request_cache.json"
+    DUMP_DIR = "."
 
     def __init__(self, developer_key, dump_dir=".", logger=None, caching=True,
             caching_delay=timedelta(days=1.0)):
         self._developer_key = developer_key
         self._logger = logger if logger else logging
         if caching:
+            if not dump_dir:
+                dump_dir = self.DUMP_DIR
             try:
                 os.mkdir(dump_dir)
             except FileExistsError:
