@@ -2,25 +2,112 @@ import os
 import json
 import requests
 import hashlib
+import logging
 
 from datetime import date
+from datetime import datetime
+from datetime import timedelta
 
 class YoutubeAPIException(Exception):
     def __init__(self, response):
         super().__init__(response['error']['message'])
 
+
+class RequestCache:
+    DUMP_FILE_NAME = ".request_cache.json"
+    def __init__(self, dump_dir=".", expires=timedelta(days=1.0), logger=None):
+        self._dump_dir = dump_dir
+        self._expires = expires
+        self._logger = logger if logger else logging
+        self._cache_file = "%s/%s" % (os.path.abspath(dump_dir),
+                self.DUMP_FILE_NAME)
+        self._load()
+
+    def _load(self):
+        cache= {}
+        if os.path.isfile(self._cache_file):
+            with open(self._cache_file, 'r') as f:
+                cached_requests = json.load(f)
+                for request_hash, (time_str, response) in cached_requests.items():
+                    time = datetime.fromisoformat(time_str)
+                    if datetime.now() - time < self._expires:
+                        cache[request_hash] = (time_str, response)
+
+        self._cache = cache
+
+    #def _save(self):
+    #    with open(self._cache_file, 'w') as f:
+    #        json.dump(self._cache, f)
+
+    #def _request_hash(self, method, params):
+    #    params= { str(key): str(value) for key, value in params.items()}
+    #    to_hash = (method+''.join(params.values())).encode("utf-8")
+    #    request_hash = hashlib.sha224(to_hash).hexdigest()
+    #    return request_hash
+
+    #def get_request(self, method, params):
+    #    request_hash = self._request_hash(method, params)
+    #    if request_hash in self._cache.keys():
+    #        time_str, response = self._cache[request_hash]
+    #        time = datetime.fromisoformat(time_str)
+    #        if datetime.now() - time < self._expires:
+    #            self._logger.info("Loading request ")
+    #            return response
+    #    return None
+
+    #def save_request(self, method, params, response_json):
+    #    self._logger.info("Saving request ")
+    #    request_hash = self._request_hash(method, params)
+    #    self._cache[request_hash] = (str(datetime.now()), response_json)
+    #    self._save()
+
+
+    def cache(self, func):
+        def do_caching(method="", params={}):
+            # generate hash of the request, used as identifier
+            params= { str(key): str(value) for key, value in params.items()}
+            to_hash = (method+''.join(params.values())).encode("utf-8")
+            request_hash = hashlib.sha224(to_hash).hexdigest()
+            # ? is request cached
+            #request_hash = self._request_hash(method, params)
+            if request_hash in self._cache.keys():
+                time_str, response_json = self._cache[request_hash]
+                # only use not expired requests
+                time = datetime.fromisoformat(time_str)
+                if datetime.now() - time < self._expires:
+                    self._logger.info("Loading request ")
+                    return response_json
+
+            #response_json = self.get_request(method, params)
+            #if not response_json:
+            # response not cached!
+            response_json = func(method, params)
+            # cache it
+            self._logger.info("Saving request ")
+            self._cache[request_hash] = (str(datetime.now()), response_json)
+            #self.save_request(method, params, response_json)
+            # write to file, in case of sudden termination of the script
+            # __del__ not relyable!
+            with open(self._cache_file, 'w') as f:
+                json.dump(self._cache, f)
+            return response_json
+        return do_caching
+
 class YoutubeAPI:
     BASE_URL = "https://www.googleapis.com/youtube/v3/"
 
-    def __init__(self, developer_key, dump_dir=None, logger=None, caching=True):
+    def __init__(self, developer_key, dump_dir=None, logger=None, caching=True,
+            caching_delay=timedelta(days=1.0)):
         self._developer_key = developer_key
         self._dump_dir = dump_dir if dump_dir else "request_json_dump/"
         self._logger = logger if logger else logging
-        self._caching = caching
         try:
             os.mkdir(self._dump_dir)
         except FileExistsError:
             pass
+        if caching:
+            cache = RequestCache(expires=caching_delay)
+            self._request = cache.cache(self._request)
 
     def _check_for_errors(self, response):
         if 'error' in response.keys():
@@ -42,21 +129,33 @@ class YoutubeAPI:
                 ).hexdigest()
         dump_file = "%s/%s_%s_%s.json" % (self._dump_dir, method, params_hash,
                 date.today())
-        if self._caching and os.path.isfile(dump_file):
-            self._logger.info("Loading request form %s" % dump_file)
-            with open(dump_file, "r") as f:
-                response_dict = json.load(f)
-        else:
-            response = requests.get("%s%s"%(self.BASE_URL, method), params=request_params,
-                    proxies=proxies)
-            self._logger.info("YOUTUBE_REQUEST: URL %s" % response.url)
-            response_dict = response.json()
-            self._check_for_errors(response_dict)
-            if self._caching:
-                self._logger.info("Saving request to %s" % dump_file)
-                with open(dump_file, "w") as f:
-                    json.dump(response_dict, f)
+
+        #response_dict = self._cache.get_request(method, params)
+        #if response_dict:
+        #    return response_dict
+        #else:
+        response = requests.get("%s%s"%(self.BASE_URL, method), params=request_params,
+                proxies=proxies)
+        response_dict = response.json()
+        self._check_for_errors(response_dict)
+        #self._cache.save_request(method, params, response_dict)
         return response_dict
+
+        #if self._caching and os.path.isfile(dump_file):
+        #    self._logger.info("Loading request form %s" % dump_file)
+        #    with open(dump_file, "r") as f:
+        #        response_dict = json.load(f)
+        #else:
+        #    response = requests.get("%s%s"%(self.BASE_URL, method), params=request_params,
+        #            proxies=proxies)
+        #    self._logger.info("YOUTUBE_REQUEST: URL %s" % response.url)
+        #    response_dict = response.json()
+        #    self._check_for_errors(response_dict)
+        #    if self._caching:
+        #        self._logger.info("Saving request to %s" % dump_file)
+        #        with open(dump_file, "w") as f:
+        #            json.dump(response_dict, f)
+        #return response_dict
 
     def search(self, channel_id="", search_query="", duration="",
             part='snippet', order="date", max_results=50, type="video",
@@ -276,3 +375,4 @@ class YoutubeFinder:
             for v in video_items
         ]
         return videos
+
