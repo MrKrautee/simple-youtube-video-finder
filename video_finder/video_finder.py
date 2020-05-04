@@ -84,6 +84,7 @@ class YoutubeAPI:
         }
         response = requests.get("%s%s"%(self.BASE_URL, method), params=request_params,
                 proxies=proxies)
+        self._logger.info("request url: %s"% response.url)
         response_dict = response.json()
         self._check_for_errors(response_dict)
         return response_dict
