@@ -4,13 +4,14 @@ import requests
 import hashlib
 import logging
 
-from datetime import date
 from datetime import datetime
 from datetime import timedelta
+
 
 class YoutubeAPIException(Exception):
     def __init__(self, response):
         super().__init__(response['error']['message'])
+
 
 class YoutubeAPI:
     BASE_URL = "https://www.googleapis.com/youtube/v3/"
@@ -18,9 +19,9 @@ class YoutubeAPI:
     DUMP_DIR = "."
 
     def __init__(self, developer_key, dump_dir=".", logger=None, caching=True,
-            caching_delay=timedelta(days=1.0)):
+                 caching_delay=timedelta(days=1.0)):
         self._developer_key = developer_key
-        self._logger = logger if logger else logging
+        self._logger = logger if logger else logging.getLogger(__name__)
         if caching:
             if not dump_dir:
                 dump_dir = self.DUMP_DIR
@@ -30,13 +31,14 @@ class YoutubeAPI:
                 pass
             self._expires = caching_delay
             self._cache_file = "%s/%s" % (os.path.abspath(dump_dir),
-                    self.DUMP_FILE_NAME)
+                                          self.DUMP_FILE_NAME)
             # Load cache from file
-            cache= {}
+            cache = {}
             if os.path.isfile(self._cache_file):
                 with open(self._cache_file, 'r') as f:
                     cached_requests = json.load(f)
-                    for request_hash, (time_str, response) in cached_requests.items():
+                    for request_hash, (time_str, response) \
+                            in cached_requests.items():
                         time = datetime.fromisoformat(time_str)
                         if datetime.now() - time < self._expires:
                             cache[request_hash] = (time_str, response)
@@ -46,7 +48,7 @@ class YoutubeAPI:
     def _cached_request(self, func):
         def do_caching(method="", params={}):
             # generate hash of the request, used as identifier
-            params= { str(key): str(value) for key, value in params.items()}
+            params = {str(key): str(value) for key, value in params.items()}
             to_hash = (method+''.join(params.values())).encode("utf-8")
             request_hash = hashlib.sha224(to_hash).hexdigest()
             # ? is request cached
@@ -75,32 +77,33 @@ class YoutubeAPI:
 
     def _request(self, method="search", params=dict()):
         # some search params maybe int ...
-        params= { str(key): str(value) for key, value in params.items()}
-        request_params ={
+        params = {str(key): str(value) for key, value in params.items()}
+        request_params = {
                 **params,
-                'key' : self._developer_key,
+                'key': self._developer_key,
         }
         # disable proxy for faster response
         proxies = {
             "http": None,
             "https": None,
         }
-        response = requests.get("%s%s"%(self.BASE_URL, method), params=request_params,
-                proxies=proxies)
-        self._logger.info("request url: %s"% response.url)
+        response = requests.get("%s%s" % (self.BASE_URL, method),
+                                params=request_params, proxies=proxies)
+        self._logger.info("request url: %s" % response.url)
         response_dict = response.json()
         self._check_for_errors(response_dict)
         return response_dict
 
     def search(self, channel_id="", search_query="", duration="",
-            part='snippet', order="date", max_results=50, type="video",
-            published_after="", published_before="", event_type="", page_token="" ):
+               part='snippet', order="date", max_results=50, type="video",
+               published_after="", published_before="", event_type="",
+               page_token=""):
 
         params = {
-                'part':part,
-                'order':order,
-                'maxResults':max_results,
-                'type':type,
+                'part': part,
+                'order': order,
+                'maxResults': max_results,
+                'type': type,
         }
 
         if search_query:
@@ -120,29 +123,29 @@ class YoutubeAPI:
 
         return self._request("search", params)
 
-    def channels(self, channel_ids, max_results=50, page_token="", part='snippet'):
-        params = { 'part':part,
-                'maxResults':max_results,
-                'id':",".join(channel_ids),
-                }
+    def channels(self, channel_ids, max_results=50, page_token="",
+                 part='snippet'):
+        params = {'part': part,
+                  'maxResults': max_results,
+                  'id': ",".join(channel_ids)}
         if page_token:
             params.update({'pageToken': page_token})
 
         return self._request("channels", params)
 
     def videos(self, video_ids, max_results=50, page_token="",
-            part='snippet,contentDetails'):
-        params = { 'part':part,
-                'maxResults':max_results,
-                'id':",".join(video_ids),
-                }
+               part='snippet,contentDetails'):
+        params = {'part': part,
+                  'maxResults': max_results,
+                  'id': ",".join(video_ids)}
         if page_token:
             params.update({'pageToken': page_token})
 
         return self._request("videos", params)
 
-    def search_all(self, channel_id="", search_query="", duration=None, published_before=None,
-            published_after=None, event_type="", page_token=None, part="snippet"):
+    def search_all(self, channel_id="", search_query="", duration=None,
+                   published_before=None, published_after=None, event_type="",
+                   page_token=None, part="snippet"):
         """ make a search request to youtube api v3, but returns a list of all
             items, instead of pages.
             returns:
@@ -150,9 +153,10 @@ class YoutubeAPI:
         """
         self._logger.info("Fetching ALL videos data from youtube.")
         search_params = dict(channel_id=channel_id, search_query=search_query,
-                page_token=page_token, duration=duration, published_after=published_after,
-                published_before=published_before, event_type=event_type,
-                part=part)
+                             page_token=page_token, duration=duration,
+                             published_after=published_after,
+                             published_before=published_before,
+                             event_type=event_type, part=part)
         yt_response = self.search(**search_params)
         videos = []
         while yt_response['items']:
@@ -161,9 +165,12 @@ class YoutubeAPI:
                 search_params['page_token'] = yt_response['nextPageToken']
                 yt_response = self.search(**search_params)
             except KeyError:
+                # got all pages, no next page
                 break
-        self._logger.info("Fetched ALL (%i) videos from youtube." % len(videos))
-        #!TODO: return error
+        self._logger.info(
+                "Fetched ALL (%i) videos from youtube." % len(videos)
+        )
+        # !TODO: return error
         return videos
 
     def channels_all(self, channel_ids=(), part="snippet,contentDetails"):
@@ -202,11 +209,12 @@ class YoutubeAPI:
             end_idx += max_results
         return videos
 
+
 class YoutubeVideo:
     URL_BASE = "http://youtube.de/watch?v="
 
     def __init__(self, title, description, image_url, video_id, duration=None,
-            published_at=None, live_broadcast=None, channel_id=None):
+                 published_at=None, live_broadcast=None, channel_id=None):
         self.title = title
         self.description = description
         self.image_url = image_url
@@ -215,22 +223,32 @@ class YoutubeVideo:
         self.published_at = published_at
         self.live_broadcast = live_broadcast
         self.channel_id = channel_id
+        # etag
+        # all thumbnails
+        # channelTitle
 
     def url(self):
         return self.URL_BASE + self.video_id
 
+
 class YoutubeChannel:
+    URL_BASE = "http://youtube.de/channel/"
+
     def __init__(self, title, description, channel_id, image):
         self.title = title
         self.description = description
         self.channel_id = channel_id
         self.image = image
 
+    def url(self):
+        return self.URL_BASE + self.video_id
+
 
 class YoutubeFinder:
     def __init__(self, developer_key, dump_dir=None, logger=None):
         self._logger = logger if logger else logging
-        self._api = YoutubeAPI(developer_key, dump_dir=dump_dir, logger=self._logger)
+        self._api = YoutubeAPI(developer_key, dump_dir=dump_dir,
+                               logger=self._logger)
 
     def get_channels(self, channel_ids=()):
         """ get channels information.
@@ -257,16 +275,19 @@ class YoutubeFinder:
     def get_channel(self, channel_id):
         return self.get_channels((channel_id, ))[0]
 
-    def search_videos(self, channel_id="", search_query="", duration=None, published_before=None,
-            published_after=None, event_type=""):
+    def search_videos(self, channel_id="", search_query="", duration=None,
+                      published_before=None, published_after=None,
+                      event_type=""):
         """ search for videos.
             returns:
                 list: YoutubeVideo
         """
-        response_items = self._api.search_all(channel_id = channel_id,
-                search_query=search_query, duration=duration,
-                published_before=published_before,
-                published_after=published_after, event_type=event_type)
+        response_items = self._api.search_all(
+                            channel_id=channel_id, search_query=search_query,
+                            duration=duration,
+                            published_before=published_before,
+                            published_after=published_after,
+                            event_type=event_type)
         videos = [
             YoutubeVideo(
                 v['snippet']['title'],
@@ -281,18 +302,20 @@ class YoutubeFinder:
         ]
         return videos
 
-    def get_videos(self, channel_id="", search_query="", duration=None, published_before=None,
-            published_after=None, event_type="" ):
+    def get_videos(self, channel_id="", search_query="", duration=None,
+                   published_before=None, published_after=None,
+                   event_type=""):
         """ get videos with all informations form search.
             returns:
                 list: YoutubeVideo
         """
         # get video_ids for search
-        videos = self._api.search_all(part="id", channel_id=channel_id,
-                search_query=search_query, duration=duration,
-                event_type=event_type,
-                published_before=published_before,
-                published_after=published_after)
+        videos = self._api.search_all(
+                    part="id", channel_id=channel_id,
+                    search_query=search_query, duration=duration,
+                    event_type=event_type,
+                    published_before=published_before,
+                    published_after=published_after)
         video_ids = [v['id']['videoId'] for v in videos]
         # get detail information for each video
         video_items = self._api.videos_all(video_ids=video_ids)
@@ -310,4 +333,3 @@ class YoutubeFinder:
             for v in video_items
         ]
         return videos
-
