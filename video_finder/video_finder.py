@@ -3,7 +3,7 @@ import json
 import requests
 import hashlib
 import logging
-
+from typing import List, Dict
 from datetime import datetime
 from datetime import timedelta
 
@@ -210,22 +210,45 @@ class YoutubeAPI:
         return videos
 
 
-class YoutubeVideo:
-    URL_BASE = "http://youtube.de/watch?v="
+class ResponseAndapter:
+    fields: Dict[str, list] = {}
 
-    def __init__(self, title, description, image_url, video_id, duration=None,
-                 published_at=None, live_broadcast=None, channel_id=None):
-        self.title = title
-        self.description = description
-        self.image_url = image_url
-        self.video_id = video_id
-        self.duration = duration
-        self.published_at = published_at
-        self.live_broadcast = live_broadcast
-        self.channel_id = channel_id
-        # etag
-        # all thumbnails
-        # channelTitle
+    def __init__(self, response_item):
+        self._raw = response_item
+
+    def _get_value(self, key_list: list, response_element: dict):
+        key = key_list[0]
+        value = response_element[key]
+        if key_list[1:]:
+            return self._get_value(key_list[1:], value)
+        else:
+            return value
+
+    def __getattr__(self, name):
+        try:
+            return self._get_value(self.fields[name], self._raw)
+        except KeyError:
+            raise AttributeError(f"cant access '{name}' from response")
+
+    @property
+    def raw(self) -> dict:
+        return self._raw
+
+
+class YoutubeVideo(ResponseAndapter):
+    URL_BASE = "http://youtube.de/watch?v="
+    fields = {
+            'title': ['snippet', 'title'],
+            'description': ['snippet', 'description'],
+            'image_url': ['snippet', 'thumbnails', 'medium', 'url'],
+            'video_id': ['id', 'videoId'],
+            'duration': ['contentDetails', 'duration'],
+            'published_at': ['snippet', 'publishedAt'],
+            'live_broadcast': ['snippet', 'liveBroadcastContent'],
+            'channel_id': ['snippet', 'channelId'],
+            'channel_title': ['snippet', 'channelTitle'],
+            'etag': ['etag'],
+    }
 
     def url(self):
         return self.URL_BASE + self.video_id
@@ -234,17 +257,23 @@ class YoutubeVideo:
 class YoutubeChannel:
     URL_BASE = "http://youtube.de/channel/"
 
-    def __init__(self, title, description, channel_id, image):
-        self.title = title
-        self.description = description
-        self.channel_id = channel_id
-        self.image = image
+    fields = {
+            'title': ['snippet', 'title'],
+            'description': ['snippet', 'description'],
+            'image_url': ['snippet', 'thumbnails', 'medium', 'url'],
+            'published_at': ['snippet', 'publishedAt'],
+            'live_broadcast': ['snippet', 'liveBroadcastContent'],
+            'channel_id': ['id'],
+            'etag': ['etag'],
+            'country': ['country'],
+    }
 
     def url(self):
         return self.URL_BASE + self.video_id
 
 
 class YoutubeFinder:
+    # @TODO: caching
     def __init__(self, developer_key, dump_dir=None, logger=None):
         self._logger = logger if logger else logging
         self._api = YoutubeAPI(developer_key, dump_dir=dump_dir,
@@ -272,12 +301,12 @@ class YoutubeFinder:
             )
         return channels
 
-    def get_channel(self, channel_id):
+    def get_channel(self, channel_id) -> YoutubeChannel:
         return self.get_channels((channel_id, ))[0]
 
     def search_videos(self, channel_id="", search_query="", duration=None,
                       published_before=None, published_after=None,
-                      event_type=""):
+                      event_type="") -> List[YoutubeVideo]:
         """ search for videos.
             returns:
                 list: YoutubeVideo
@@ -288,23 +317,12 @@ class YoutubeFinder:
                             published_before=published_before,
                             published_after=published_after,
                             event_type=event_type)
-        videos = [
-            YoutubeVideo(
-                v['snippet']['title'],
-                v['snippet']['description'],
-                v['snippet']['thumbnails']['medium']['url'],
-                v['id']['videoId'],
-                published_at=v['snippet']['publishedAt'],
-                live_broadcast=v['snippet']['liveBroadcastContent'],
-                channel_id=v['snippet']['channelId']
-            )
-            for v in response_items
-        ]
+        videos = [YoutubeVideo(v) for v in response_items]
         return videos
 
     def get_videos(self, channel_id="", search_query="", duration=None,
                    published_before=None, published_after=None,
-                   event_type=""):
+                   event_type="") -> List[YoutubeVideo]:
         """ get videos with all informations form search.
             returns:
                 list: YoutubeVideo
@@ -319,17 +337,5 @@ class YoutubeFinder:
         video_ids = [v['id']['videoId'] for v in videos]
         # get detail information for each video
         video_items = self._api.videos_all(video_ids=video_ids)
-        videos = [
-            YoutubeVideo(
-                v['snippet']['title'],
-                v['snippet']['description'],
-                v['snippet']['thumbnails']['medium']['url'],
-                v['id'],
-                duration=v['contentDetails']['duration'],
-                published_at=v['snippet']['publishedAt'],
-                live_broadcast=v['snippet']['liveBroadcastContent'],
-                channel_id=v['snippet']['channelId']
-            )
-            for v in video_items
-        ]
+        videos = [YoutubeVideo(v) for v in video_items]
         return videos
