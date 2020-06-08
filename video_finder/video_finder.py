@@ -213,6 +213,7 @@ class YoutubeAPI:
 
 
 class ResponseAndapter:
+    # maps attribute fields to response values
     fields: Dict[str, list] = {}
 
     def __init__(self, response_item):
@@ -230,7 +231,7 @@ class ResponseAndapter:
         try:
             return self._get_value(self.fields[name], self._raw)
         except KeyError:
-            raise AttributeError(f"cant access '{name}' from response")
+            raise AttributeError(f"cant access '{name}' from response object.")
 
     @property
     def raw(self) -> dict:
@@ -256,7 +257,7 @@ class YoutubeVideo(ResponseAndapter):
         return self.URL_BASE + self.video_id
 
 
-class YoutubeChannel:
+class YoutubeChannel(ResponseAndapter):
     URL_BASE = "http://youtube.de/channel/"
     fields = {
             'title': ['snippet', 'title'],
