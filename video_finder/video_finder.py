@@ -3,7 +3,7 @@ import json
 import requests
 import hashlib
 import logging
-from typing import List, Dict
+from typing import List, Dict, Any
 from datetime import datetime
 from datetime import timedelta
 
@@ -75,7 +75,7 @@ class YoutubeAPI:
         if 'error' in response.keys():
             raise YoutubeAPIException(response)
 
-    def _request(self, method="search", params=dict()):
+    def _request(self, method="search", params=dict()) -> Dict[str, Any]:
         # some search params maybe int ...
         params = {str(key): str(value) for key, value in params.items()}
         request_params = {
@@ -97,7 +97,7 @@ class YoutubeAPI:
     def search(self, channel_id="", search_query="", duration="",
                part='snippet', order="date", max_results=50, type="video",
                published_after="", published_before="", event_type="",
-               page_token=""):
+               page_token="") -> Dict[str, Any]:
 
         params = {
                 'part': part,
@@ -124,7 +124,7 @@ class YoutubeAPI:
         return self._request("search", params)
 
     def channels(self, channel_ids, max_results=50, page_token="",
-                 part='snippet'):
+                 part='snippet') -> Dict[str, Any]:
         params = {'part': part,
                   'maxResults': max_results,
                   'id': ",".join(channel_ids)}
@@ -134,7 +134,7 @@ class YoutubeAPI:
         return self._request("channels", params)
 
     def videos(self, video_ids, max_results=50, page_token="",
-               part='snippet,contentDetails'):
+               part='snippet,contentDetails') -> Dict[str, Any]:
         params = {'part': part,
                   'maxResults': max_results,
                   'id': ",".join(video_ids)}
@@ -145,7 +145,7 @@ class YoutubeAPI:
 
     def search_all(self, channel_id="", search_query="", duration=None,
                    published_before=None, published_after=None, event_type="",
-                   page_token=None, part="snippet"):
+                   page_token=None, part="snippet") -> List[Dict[str, Any]]:
         """ make a search request to youtube api v3, but returns a list of all
             items, instead of pages.
             returns:
@@ -173,7 +173,8 @@ class YoutubeAPI:
         # !TODO: return error
         return videos
 
-    def channels_all(self, channel_ids=(), part="snippet,contentDetails"):
+    def channels_all(self, channel_ids=(),
+                     part="snippet,contentDetails") -> List[Dict[str, Any]]:
         """ make a channels request to youtube api v3, but returns a list of all
             items, instead of pages.
             returns:
@@ -191,7 +192,8 @@ class YoutubeAPI:
             end_idx += max_results
         return channels
 
-    def videos_all(self, video_ids=(), part="snippet,contentDetails"):
+    def videos_all(self, video_ids=(),
+                   part="snippet,contentDetails") -> List[Dict[str, Any]]:
         """ make a videos request to youtube api v3, but returns a list of all
             items, instead of pages.
             returns:
@@ -216,7 +218,7 @@ class ResponseAndapter:
     def __init__(self, response_item):
         self._raw = response_item
 
-    def _get_value(self, key_list: list, response_element: dict):
+    def _get_value(self, key_list: list, response_element: dict) -> str:
         key = key_list[0]
         value = response_element[key]
         if key_list[1:]:
@@ -224,7 +226,7 @@ class ResponseAndapter:
         else:
             return value
 
-    def __getattr__(self, name):
+    def __getattr__(self, name) -> str:
         try:
             return self._get_value(self.fields[name], self._raw)
         except KeyError:
@@ -250,13 +252,12 @@ class YoutubeVideo(ResponseAndapter):
             'etag': ['etag'],
     }
 
-    def url(self):
+    def url(self) -> str:
         return self.URL_BASE + self.video_id
 
 
 class YoutubeChannel:
     URL_BASE = "http://youtube.de/channel/"
-
     fields = {
             'title': ['snippet', 'title'],
             'description': ['snippet', 'description'],
@@ -268,7 +269,7 @@ class YoutubeChannel:
             'country': ['country'],
     }
 
-    def url(self):
+    def url(self) -> str:
         return self.URL_BASE + self.video_id
 
 
@@ -279,7 +280,7 @@ class YoutubeFinder:
         self._api = YoutubeAPI(developer_key, dump_dir=dump_dir,
                                logger=self._logger)
 
-    def get_channels(self, channel_ids=()):
+    def get_channels(self, channel_ids=()) -> List[YoutubeChannel]:
         """ get channels information.
             params:
                 list: channel ids
@@ -290,15 +291,7 @@ class YoutubeFinder:
         items = self._api.channels_all(channel_ids)
         channels = []
         for channel in items:
-            snippet = channel['snippet']
-            channels.append(
-                    YoutubeChannel(
-                        snippet['title'],
-                        snippet['description'],
-                        channel['id'],
-                        snippet['thumbnails']['medium']['url']
-                    )
-            )
+            channels.append(YoutubeChannel(channel))
         return channels
 
     def get_channel(self, channel_id) -> YoutubeChannel:
