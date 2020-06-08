@@ -57,12 +57,12 @@ class YoutubeAPI:
                 # only use not expired requests
                 time = datetime.fromisoformat(time_str)
                 if datetime.now() - time < self._expires:
-                    self._logger.info("Loading request ")
+                    self._logger.info("Loading request")
                     return response_json
             # response not cached!
             response_json = func(method, params)
             # cache it
-            self._logger.info("Saving request ")
+            self._logger.info("Caching request")
             self._cache[request_hash] = (str(datetime.now()), response_json)
             # write to file, in case of sudden termination of the script
             # __del__ not relyable!
@@ -83,10 +83,7 @@ class YoutubeAPI:
                 'key': self._developer_key,
         }
         # disable proxy for faster response
-        proxies = {
-            "http": None,
-            "https": None,
-        }
+        proxies = {"http": None, "https": None}
         response = requests.get("%s%s" % (self.BASE_URL, method),
                                 params=request_params, proxies=proxies)
         self._logger.info("request url: %s" % response.url)
@@ -170,7 +167,6 @@ class YoutubeAPI:
         self._logger.info(
                 "Fetched ALL (%i) videos from youtube." % len(videos)
         )
-        # !TODO: return error
         return videos
 
     def channels_all(self, channel_ids=(),
@@ -213,7 +209,7 @@ class YoutubeAPI:
 
 
 class ResponseAndapter:
-    # maps attribute fields to response values
+    # maps attributes to response values
     fields: Dict[str, list] = {}
 
     def __init__(self, response_item):
@@ -275,11 +271,12 @@ class YoutubeChannel(ResponseAndapter):
 
 
 class YoutubeFinder:
-    # @TODO: caching
-    def __init__(self, developer_key, dump_dir=None, logger=None):
-        self._logger = logger if logger else logging
+    def __init__(self, developer_key, dump_dir=None, logger=None, caching=True,
+                 caching_delay=timedelta(days=1.0)):
+        self._logger = logger if logger else logging.getLogger(__name__)
         self._api = YoutubeAPI(developer_key, dump_dir=dump_dir,
-                               logger=self._logger)
+                               logger=self._logger, caching=caching,
+                               caching_delay=caching_delay)
 
     def get_channels(self, channel_ids=()) -> List[YoutubeChannel]:
         """ get channels information.
