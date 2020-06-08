@@ -1,0 +1,62 @@
+{
+  "kind": "youtube#videoListResponse",
+  "etag": "zqd_1xobv3f8AE-AWQjupxAYarQ",
+  "items": [
+    {
+      "kind": "youtube#video",
+      "etag": "4eyApd8-f_OE_PSzIfDIdV1E0iA",
+      "id": "B2Yv6arlsIA",
+      "snippet": {
+        "publishedAt": "2020-06-07T19:29:04Z",
+        "channelId": "UCBC3nbpRi7ZpM2MwT5HlGZA",
+        "title": "THE CREW2 - C´EST UNE BOMBE LA KAWASAKI Z1000 ABS",
+        "description": "SHAREfactory™\nhttps://store.playstation.com/#!/fr-be/tid=CUSA00572_00",
+        "thumbnails": {
+          "default": {
+            "url": "https://i.ytimg.com/vi/B2Yv6arlsIA/default.jpg",
+            "width": 120,
+            "height": 90
+          },
+          "medium": {
+            "url": "https://i.ytimg.com/vi/B2Yv6arlsIA/mqdefault.jpg",
+            "width": 320,
+            "height": 180
+          },
+          "high": {
+            "url": "https://i.ytimg.com/vi/B2Yv6arlsIA/hqdefault.jpg",
+            "width": 480,
+            "height": 360
+          }
+        },
+        "channelTitle": "EUGEN B.T.R",
+        "tags": [
+          "#PS4share",
+          "PlayStation 4",
+          "Sony Interactive Entertainment",
+          "SHAREfactory™",
+          "{4ca3a8c8-4dd4-449e-9c04-72147f4f2dd4}",
+          "xJuSt-_GeNix"
+        ],
+        "categoryId": "20",
+        "liveBroadcastContent": "none",
+        "localized": {
+          "title": "THE CREW2 - C´EST UNE BOMBE LA KAWASAKI Z1000 ABS",
+          "description": "SHAREfactory™\nhttps://store.playstation.com/#!/fr-be/tid=CUSA00572_00"
+        }
+      },
+      "contentDetails": {
+        "duration": "PT12M26S",
+        "dimension": "2d",
+        "definition": "hd",
+        "caption": "false",
+        "licensedContent": false,
+        "contentRating": {},
+        "projection": "rectangular"
+      }
+    }
+  ],
+  "pageInfo": {
+    "totalResults": 1,
+    "resultsPerPage": 1
+  }
+}

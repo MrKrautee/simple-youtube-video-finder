@@ -1,0 +1,76 @@
+{
+  "kind": "youtube#channelListResponse",
+  "etag": "snKTXm_S0baK--lCvPvIuU8FvGw",
+  "pageInfo": {
+    "totalResults": 2,
+    "resultsPerPage": 2
+  },
+  "items": [
+    {
+      "kind": "youtube#channel",
+      "etag": "hTnVZQYYEd3gtTGxlJJgNfaGA_c",
+      "id": "UCHemJpLUcATaKqDzohNAa6A",
+      "snippet": {
+        "title": "Roh Vegan am Limit",
+        "description": "Hi, mein Name ist Patrick und damit erstmal herzlich willkommen auf meinem Kanal\n\nAuf Grundlage der neuesten wissenschaftlichen Studien versuche ich als Biochemiker euch objektiv die Zusammenhänge zwischen Gesundheit und Medizin zu erklären\n\nNeben meinen Videos zu unserer Gesundheit und veganer Ernährung gehe ich meiner Leidenschaft der Fitness und des Bodybuildings nach \n\nIch hoffe dass du auf meinem Kanal fündig wirst und mir vielleicht ein Abo dalässt 🙂\n\n\nViel Spaß, dein Patrick\n\nImpressum: https://vitasomal.de/impressum/",
+        "customUrl": "rohveganamlimit",
+        "publishedAt": "2015-06-01T16:28:57Z",
+        "thumbnails": {
+          "default": {
+            "url": "https://yt3.ggpht.com/a/AATXAJxCGZRxFD_ws8DU2se0Te-PHpCxHWySxyA20g=s88-c-k-c0xffffffff-no-rj-mo",
+            "width": 88,
+            "height": 88
+          },
+          "medium": {
+            "url": "https://yt3.ggpht.com/a/AATXAJxCGZRxFD_ws8DU2se0Te-PHpCxHWySxyA20g=s240-c-k-c0xffffffff-no-rj-mo",
+            "width": 240,
+            "height": 240
+          },
+          "high": {
+            "url": "https://yt3.ggpht.com/a/AATXAJxCGZRxFD_ws8DU2se0Te-PHpCxHWySxyA20g=s800-c-k-c0xffffffff-no-rj-mo",
+            "width": 800,
+            "height": 800
+          }
+        },
+        "localized": {
+          "title": "Roh Vegan am Limit",
+          "description": "Hi, mein Name ist Patrick und damit erstmal herzlich willkommen auf meinem Kanal\n\nAuf Grundlage der neuesten wissenschaftlichen Studien versuche ich als Biochemiker euch objektiv die Zusammenhänge zwischen Gesundheit und Medizin zu erklären\n\nNeben meinen Videos zu unserer Gesundheit und veganer Ernährung gehe ich meiner Leidenschaft der Fitness und des Bodybuildings nach \n\nIch hoffe dass du auf meinem Kanal fündig wirst und mir vielleicht ein Abo dalässt 🙂\n\n\nViel Spaß, dein Patrick\n\nImpressum: https://vitasomal.de/impressum/"
+        },
+        "country": "DE"
+      }
+    },
+    {
+      "kind": "youtube#channel",
+      "etag": "hxLyD3wLiufu79VUeAbt3PDIIHM",
+      "id": "UCcIvNGMBSQWwo1v3n-ZRBCw",
+      "snippet": {
+        "title": "Humbled Trader",
+        "description": "Hi! My name is Humbled Trader.\n\nAre you tired of all the Lambos, the luxury travel and partying you see in ads for day trading chat rooms and related services?\n\nI am too! And I promise you won't see any of that here. This is a channel made by a day trader for day traders who are REAL. Stock market trading and investing is hard. Seeing all the fluff out there on social media creates unrealistic expectations for beginners new to day trading. \n\nHere's what you will get here:\n-Realistic day trading strategies\n-Penny stock trading strategies\n-Swing trading overnight set ups\n-How to read SEC filings for penny stocks\n-How to day trade sympathies and hypes for both large caps and small cap penny stocks!\n-Day trading breakout and breakdown on large caps\n\nIf you want to see some real, and condensed content for both beginners and experienced, SUBSCRIBE for more! :)\n\nFor business inquiries only, you can reach me at HumbledTraderBusiness(at)gmail.com",
+        "customUrl": "humbledtrader",
+        "publishedAt": "2018-12-02T04:07:54Z",
+        "thumbnails": {
+          "default": {
+            "url": "https://yt3.ggpht.com/a/AATXAJwKdNs5mSu1yqL9w3s3iWeXTmZKInvRnwbQww=s88-c-k-c0xffffffff-no-rj-mo",
+            "width": 88,
+            "height": 88
+          },
+          "medium": {
+            "url": "https://yt3.ggpht.com/a/AATXAJwKdNs5mSu1yqL9w3s3iWeXTmZKInvRnwbQww=s240-c-k-c0xffffffff-no-rj-mo",
+            "width": 240,
+            "height": 240
+          },
+          "high": {
+            "url": "https://yt3.ggpht.com/a/AATXAJwKdNs5mSu1yqL9w3s3iWeXTmZKInvRnwbQww=s800-c-k-c0xffffffff-no-rj-mo",
+            "width": 800,
+            "height": 800
+          }
+        },
+        "localized": {
+          "title": "Humbled Trader",
+          "description": "Hi! My name is Humbled Trader.\n\nAre you tired of all the Lambos, the luxury travel and partying you see in ads for day trading chat rooms and related services?\n\nI am too! And I promise you won't see any of that here. This is a channel made by a day trader for day traders who are REAL. Stock market trading and investing is hard. Seeing all the fluff out there on social media creates unrealistic expectations for beginners new to day trading. \n\nHere's what you will get here:\n-Realistic day trading strategies\n-Penny stock trading strategies\n-Swing trading overnight set ups\n-How to read SEC filings for penny stocks\n-How to day trade sympathies and hypes for both large caps and small cap penny stocks!\n-Day trading breakout and breakdown on large caps\n\nIf you want to see some real, and condensed content for both beginners and experienced, SUBSCRIBE for more! :)\n\nFor business inquiries only, you can reach me at HumbledTraderBusiness(at)gmail.com"
+        },
+        "country": "CA"
+      }
+    }
+  ]
+}
