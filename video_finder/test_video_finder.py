@@ -40,6 +40,7 @@ def test_search(monkeypatch):
             'q': search_query,
             'order': 'date',
             'type': 'video',
+            'videoDuration': 'any',
             'key': 'fake-dev-key'}
     expected_endpoint = f"{YoutubeAPI.BASE_URL}search"
     _test_params(monkeypatch, expected_params, expected_endpoint)
