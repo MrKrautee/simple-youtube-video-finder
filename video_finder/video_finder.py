@@ -3,10 +3,66 @@ import json
 import requests
 import hashlib
 import logging
-import warnings
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Tuple
+from enum import Enum
 from datetime import datetime
 from datetime import timedelta
+
+
+class VideoDuration(Enum):
+    """ The videoDuration parameter filters video search results based on their
+        duration. If you specify a value for this parameter, you must also set
+        the type parameter's value to video.
+    """
+    ANY = "any"  # do not filter on duration (default)
+    LONG = "long"  # videos longer than 20 mins.
+    MEDIUM = "medium"  # videos between 4 and 20 mins.
+    SHORT = "short"  # videos less than 4 mins.
+
+
+class ResultType(Enum):
+    """ The type parameter restricts a search query to only retrieve a
+        particular type of resource.
+    """
+    CHANNEL = "channel"
+    PLAYLIST = "playlist"
+    VIDEO = "video"
+
+
+class VideoEmbeddable(Enum):  # NOT USED!
+    """ The videoEmbeddable parameter lets you to restrict a search to only
+        videos that can be embedded into a webpage. If you specify a value
+        for this parameter, you must also set the type parameter's value to
+        video.
+    """
+    ANY = "any"
+    TRUE = "true"
+
+
+class VideoCaption(Enum):  # NOT USED!
+    """ The videoCaption parameter indicates whether the API should filter
+        video search results based on whether they have captions. If you
+        specify a value for this parameter, you must also set the type
+        parameter's value to video.
+    """
+    ANY = "any"
+    CLOSEDCAPTION = "closedCaption"  # videos that have caption
+    NONE = "none"  # videos that do not have caption
+
+
+class Order(Enum):
+    DATE = "date"
+    RATING = "rating"
+    RELEVANCE = "relevance"
+    TITLE = "title"
+    VIDEOCOUNT = "videoCount"
+    VIEWCOUNT = "viewCount"
+
+
+class EventType(Enum):
+    COMPLETED = "completed"
+    LIVE = "live"
+    UPCOMING = "upcoming"
 
 
 class YoutubeAPIException(Exception):
@@ -92,16 +148,23 @@ class YoutubeAPI:
         self._check_for_errors(response_dict)
         return response_dict
 
-    def search(self, channel_id="", search_query="", duration="",
-               part='snippet', order="date", max_results=50, type="video",
-               published_after="", published_before="", event_type="",
-               page_token="") -> Dict[str, Any]:
+    def search(self, channel_id: str = "", search_query: str = "",
+               duration: VideoDuration = VideoDuration.ANY,
+               order: Order = Order.DATE, max_results: int = 50,
+               published_after: str = "", published_before: str = "",
+               event_type: EventType = None,
+               type: List[ResultType] = (ResultType.VIDEO,),
+               part='snippet', page_token: str = "") -> Dict[str, Any]:
+        """ make /search request to www.googleapis.com/youtube/v3.
+            look at youtube api documentation:
+            https://developers.google.com/youtube/v3/docs/search/list
+        """
 
         params = {
                 'part': part,
-                'order': order,
+                'order': order.value,
                 'maxResults': max_results,
-                'type': type,
+                'type': ','.join(map(lambda e: e.value, type)),
         }
 
         if search_query:
@@ -115,14 +178,18 @@ class YoutubeAPI:
         if page_token:
             params.update({'pageToken': page_token})
         if duration:
-            params.update({'videoDuration': duration})
+            params.update({'videoDuration': duration.value})
         if event_type:
-            params.update({'eventType': event_type})
+            params.update({'eventType': event_type.value})
 
         return self._request("search", params)
 
     def channels(self, channel_ids, max_results=50, page_token="",
                  part='snippet') -> Dict[str, Any]:
+        """ make /channels request to www.googleapis.com/youtube/v3.
+            look at youtube api documentation:
+            https://developers.google.com/youtube/v3/docs/channels/list
+        """
         params = {'part': part,
                   'maxResults': max_results,
                   'id': ",".join(channel_ids)}
@@ -133,6 +200,10 @@ class YoutubeAPI:
 
     def videos(self, video_ids, max_results=50, page_token="",
                part='snippet,contentDetails') -> Dict[str, Any]:
+        """ make /videos request to www.googleapis.com/youtube/v3.
+            look at youtube api documentation:
+            https://developers.google.com/youtube/v3/docs/videos/list
+        """
         params = {'part': part,
                   'maxResults': max_results,
                   'id': ",".join(video_ids)}
@@ -141,9 +212,12 @@ class YoutubeAPI:
 
         return self._request("videos", params)
 
-    def search_all(self, channel_id="", search_query="", duration=None,
-                   published_before=None, published_after=None, event_type="",
-                   page_token=None, part="snippet") -> List[Dict[str, Any]]:
+    def search_all(self, channel_id: str = "", search_query: str = "",
+                   duration: VideoDuration = VideoDuration.ANY,
+                   published_before: str = "", published_after: str = "",
+                   event_type: EventType = None,
+                   page_token: str = "",
+                   part: str = "snippet") -> List[Dict[str, Any]]:
         """ make a search request to youtube api v3, but returns a list of all
             items, instead of pages.
             returns:
@@ -170,7 +244,7 @@ class YoutubeAPI:
         )
         return videos
 
-    def channels_all(self, channel_ids=(),
+    def channels_all(self, channel_ids: Tuple[str] = (),
                      part="snippet,contentDetails") -> List[Dict[str, Any]]:
         """ make a channels request to youtube api v3, but returns a list of all
             items, instead of pages.
@@ -189,11 +263,11 @@ class YoutubeAPI:
             end_idx += max_results
         return channels
 
-    def videos_all(self, video_ids=(),
+    def videos_all(self, video_ids: Tuple[str] = (),
                    part="snippet,contentDetails") -> List[Dict[str, Any]]:
         """ make a videos request to youtube api v3, but returns a list of all
             items, instead of pages.
-            returns:
+            Returns:
                 list: of all response['items']. with contentDetails.
                                                 see youtube api documentation.
         """
@@ -271,7 +345,7 @@ class YoutubeChannel(ResponseAndapter):
             'description': ['snippet', 'description'],
             'image_url': ['snippet', 'thumbnails', 'medium', 'url'],
             'published_at': ['snippet', 'publishedAt'],
-            'live_broadcast': ['snippet', 'liveBroadcastContent'],
+            'custom_url': ['snippet', 'customUrl'],
             'channel_id': ['id'],
             'etag': ['etag'],
             'country': ['country'],
@@ -289,12 +363,14 @@ class YoutubeFinder:
                                logger=self._logger, caching=caching,
                                caching_delay=caching_delay)
 
-    def get_channels(self, channel_ids=()) -> List[YoutubeChannel]:
+    def get_channels(self,
+                     channel_ids: Tuple[str] = ()) -> List[YoutubeChannel]:
         """ get channels information.
-            params:
-                list: channel ids
-            returns:
-                list: YoutubeChannel
+            Args:
+                channel_id (tuple): channel ids
+            Returns:
+                List[YoutubeChannel]:
+                    List with requested channels.
 
         """
         items = self._api.channels_all(channel_ids)
@@ -303,26 +379,22 @@ class YoutubeFinder:
             channels.append(YoutubeChannel(channel))
         return channels
 
-    def get_channel(self, channel_id) -> YoutubeChannel:
+    def get_channel(self, channel_id: str) -> YoutubeChannel:
         return self.get_channels((channel_id, ))[0]
 
-    def search_videos(self, channel_id="", search_query="",
-                      content_details=False, duration=None,
-                      published_before=None, published_after=None,
-                      event_type="") -> List[YoutubeVideo]:
+    def search_videos(self, channel_id: str = "", search_query: str = "",
+                      content_details: bool = False,
+                      duration: VideoDuration = VideoDuration.ANY,
+                      published_before: str = "", published_after: str = "",
+                      event_type: EventType = None) -> List[YoutubeVideo]:
         """ Search for videos.
-            Parameters
-            ---------
-                channel_id : str
-                    channel to search in.
-                search_query : str
-                    search term.
-                content_details : bool
-                    detail information for each vidoe (needs extra requests)
-                    (default is False).
-            Returns
-            -------
-                List[YoutubeVideo]
+            Args:
+                channel_id (str): channel to search in.
+                search_query (str): search term.
+                content_details (bool): detail information for each video
+                    (needs extra requests, default is False).
+            Returns:
+                List[YoutubeVideo]:
                     search result containing all matching videos.
         """
         part = "id" if content_details else "snippet"
@@ -340,21 +412,4 @@ class YoutubeFinder:
             response_items = self._api.videos_all(video_ids=video_ids)
 
         videos = [YoutubeVideo(v) for v in response_items]
-        return videos
-
-    def get_videos(self, channel_id="", search_query="", duration=None,
-                   published_before=None, published_after=None,
-                   event_type="") -> List[YoutubeVideo]:
-        """ Same as search_videos(content_details=True). """
-        warnings.warn(
-            "get_videos is deprecated: use search_videos(content_details=True)"
-            + "instead.", DeprecationWarning)
-        videos = self.search_videos(
-                    content_details=True,
-                    channel_id=channel_id,
-                    search_query=search_query, duration=duration,
-                    event_type=event_type,
-                    published_before=published_before,
-                    published_after=published_after
-        )
         return videos
