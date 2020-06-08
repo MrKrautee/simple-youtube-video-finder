@@ -3,6 +3,7 @@ import json
 import requests
 import hashlib
 import logging
+import warnings
 from typing import List, Dict, Any
 from datetime import datetime
 from datetime import timedelta
@@ -241,13 +242,23 @@ class YoutubeVideo(ResponseAndapter):
             'description': ['snippet', 'description'],
             'image_url': ['snippet', 'thumbnails', 'medium', 'url'],
             'video_id': ['id', 'videoId'],
-            'duration': ['contentDetails', 'duration'],
             'published_at': ['snippet', 'publishedAt'],
             'live_broadcast': ['snippet', 'liveBroadcastContent'],
             'channel_id': ['snippet', 'channelId'],
             'channel_title': ['snippet', 'channelTitle'],
             'etag': ['etag'],
+            # only with content_details=True
+            'duration': ['contentDetails', 'duration'],
+            'definition': ['contentDetails', 'definition'],
+            'dimension': ['contentDetails', 'demension'],
+            'tags': ['snippet', 'tags']
     }
+
+    def __init__(self, raw):
+        super().__init__(raw)
+        # response for /videos is different from /search.
+        if self._raw['kind'] == "youtube#video":
+            self.fields['video_id'] = ['id']
 
     def url(self) -> str:
         return self.URL_BASE + self.video_id
@@ -295,38 +306,55 @@ class YoutubeFinder:
     def get_channel(self, channel_id) -> YoutubeChannel:
         return self.get_channels((channel_id, ))[0]
 
-    def search_videos(self, channel_id="", search_query="", duration=None,
+    def search_videos(self, channel_id="", search_query="",
+                      content_details=False, duration=None,
                       published_before=None, published_after=None,
                       event_type="") -> List[YoutubeVideo]:
-        """ search for videos.
-            returns:
-                list: YoutubeVideo
+        """ Search for videos.
+            Parameters
+            ---------
+                channel_id : str
+                    channel to search in.
+                search_query : str
+                    search term.
+                content_details : bool
+                    detail information for each vidoe (needs extra requests)
+                    (default is False).
+            Returns
+            -------
+                List[YoutubeVideo]
+                    search result containing all matching videos.
         """
+        part = "id" if content_details else "snippet"
         response_items = self._api.search_all(
+                            part=part,
                             channel_id=channel_id, search_query=search_query,
                             duration=duration,
                             published_before=published_before,
                             published_after=published_after,
-                            event_type=event_type)
+                            event_type=event_type
+        )
+        if content_details:  # get addtional video data (contentDetails)
+            video_ids = [v['id']['videoId'] for v in response_items]
+            # get detail information for each video
+            response_items = self._api.videos_all(video_ids=video_ids)
+
         videos = [YoutubeVideo(v) for v in response_items]
         return videos
 
     def get_videos(self, channel_id="", search_query="", duration=None,
                    published_before=None, published_after=None,
                    event_type="") -> List[YoutubeVideo]:
-        """ get videos with all informations form search.
-            returns:
-                list: YoutubeVideo
-        """
-        # get video_ids for search
-        videos = self._api.search_all(
-                    part="id", channel_id=channel_id,
+        """ Same as search_videos(content_details=True). """
+        warnings.warn(
+            "get_videos is deprecated: use search_videos(content_details=True)"
+            + "instead.", DeprecationWarning)
+        videos = self.search_videos(
+                    content_details=True,
+                    channel_id=channel_id,
                     search_query=search_query, duration=duration,
                     event_type=event_type,
                     published_before=published_before,
-                    published_after=published_after)
-        video_ids = [v['id']['videoId'] for v in videos]
-        # get detail information for each video
-        video_items = self._api.videos_all(video_ids=video_ids)
-        videos = [YoutubeVideo(v) for v in video_items]
+                    published_after=published_after
+        )
         return videos
