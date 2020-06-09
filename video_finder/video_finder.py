@@ -65,6 +65,39 @@ class EventType(Enum):
     UPCOMING = "upcoming"
 
 
+# Search Parameter
+# # ALL:
+# x      part(required)
+# x      channelId
+# x      channelType [any, show]
+# x      maxResults
+# x      order
+# x      pageToken
+# x      published_after
+# x      published_befor
+# x      q
+# x      type
+#       
+#       regionCode
+# x      relevanceLanguage
+#       safeSearch [moderate, none, strict]
+#       location
+#       locationRadius
+
+# # VIDEO:
+# x      eventType
+# x      videoCaption
+# x      videoDuration
+# x      videoEmbeddable
+#       videoLicense [any, creativeCommon, youtube]
+#       videoSyndicated [any, true]
+#       videoType [any, episode, movie]
+# x      videoDefinition [any, high, standard]
+#       videoDimension [2d, 3d, any]
+# x      relatedToVideoId
+#       videoCategoryId
+#
+#
 class YoutubeAPIException(Exception):
     def __init__(self, response):
         super().__init__(response['error']['message'])
@@ -105,8 +138,10 @@ class YoutubeAPI:
     def _cached_request(self, func):
         def do_caching(method="", params={}):
             # generate hash of the request, used as identifier
-            params = {str(key): str(value) for key, value in params.items()}
-            to_hash = (method+''.join(params.values())).encode("utf-8")
+            param_str_list = [f"{key}:{value}"
+                              for key, value in params.items()]
+            to_hash = (method+','.join(param_str_list)).encode("utf-8")
+            self._logger.debug(f"Create hash from {to_hash}")
             request_hash = hashlib.sha224(to_hash).hexdigest()
             # ? is request cached
             if request_hash in self._cache.keys():
@@ -114,12 +149,14 @@ class YoutubeAPI:
                 # only use not expired requests
                 time = datetime.fromisoformat(time_str)
                 if datetime.now() - time < self._expires:
-                    self._logger.info("Loading request")
+                    self._logger.info(f"Loading request {request_hash}")
                     return response_json
+                else:
+                    self._logger.debug(f"Expired request {request_hash}")
             # response not cached!
             response_json = func(method, params)
             # cache it
-            self._logger.info("Caching request")
+            self._logger.info(f"Caching request {request_hash}")
             self._cache[request_hash] = (str(datetime.now()), response_json)
             # write to file, in case of sudden termination of the script
             # __del__ not relyable!
@@ -149,11 +186,12 @@ class YoutubeAPI:
         return response_dict
 
     def search(self, channel_id: str = "", search_query: str = "",
-               duration: VideoDuration = VideoDuration.ANY,
                order: Order = Order.DATE, max_results: int = 50,
-               published_after: str = "", published_before: str = "",
-               event_type: EventType = None,
+               published_after: datetime = None,
+               published_before: datetime = None,
                type: List[ResultType] = (ResultType.VIDEO,),
+               event_type: EventType = None,
+               duration: VideoDuration = VideoDuration.ANY,
                part='snippet', page_token: str = "") -> Dict[str, Any]:
         """ make /search request to www.googleapis.com/youtube/v3.
             look at youtube api documentation:
@@ -172,9 +210,13 @@ class YoutubeAPI:
         if channel_id:
             params.update({'channelId': channel_id})
         if published_before:
-            params.update({'publishedBefore': published_before})
+            published_before_tz = published_before.astimezone()
+            before_rfc3339 = published_before_tz.isoformat()
+            params.update({'publishedBefore': before_rfc3339})
         if published_after:
-            params.update({'publishedAfter': published_after})
+            published_after_tz = published_after.astimezone()
+            after_rfc3339 = published_after_tz.isoformat()
+            params.update({'publishedAfter': after_rfc3339})
         if page_token:
             params.update({'pageToken': page_token})
         if duration:
@@ -214,7 +256,8 @@ class YoutubeAPI:
 
     def search_all(self, channel_id: str = "", search_query: str = "",
                    duration: VideoDuration = VideoDuration.ANY,
-                   published_before: str = "", published_after: str = "",
+                   published_before: datetime = None,
+                   published_after: datetime = None,
                    event_type: EventType = None,
                    page_token: str = "",
                    part: str = "snippet") -> List[Dict[str, Any]]:
@@ -302,7 +345,9 @@ class ResponseAndapter:
         try:
             return self._get_value(self.fields[name], self._raw)
         except KeyError:
-            raise AttributeError(f"cant access '{name}' from response object.")
+            raise AttributeError(
+                    f"can't access '{name}' from response object."
+            )
 
     @property
     def raw(self) -> dict:
@@ -385,7 +430,8 @@ class YoutubeFinder:
     def search_videos(self, channel_id: str = "", search_query: str = "",
                       content_details: bool = False,
                       duration: VideoDuration = VideoDuration.ANY,
-                      published_before: str = "", published_after: str = "",
+                      published_before: datetime = None,
+                      published_after: datetime = None,
                       event_type: EventType = None) -> List[YoutubeVideo]:
         """ Search for videos.
             Args:
@@ -393,6 +439,10 @@ class YoutubeFinder:
                 search_query (str): search term.
                 content_details (bool): detail information for each video
                     (needs extra requests, default is False).
+                published_before (datetime): utc datetime.
+                    (ie: datetime.datetime.utcnow())
+                published_after (datetime): utc datetime.
+                    (ie: datetime.datetime.utcnow())
             Returns:
                 List[YoutubeVideo]:
                     search result containing all matching videos.
@@ -408,6 +458,7 @@ class YoutubeFinder:
         )
         if content_details:  # get addtional video data (contentDetails)
             video_ids = [v['id']['videoId'] for v in response_items]
+            self._logger.info(f"get contentDetails for {video_ids}")
             # get detail information for each video
             response_items = self._api.videos_all(video_ids=video_ids)
 
