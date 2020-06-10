@@ -1,6 +1,18 @@
 # simple-youtube-video-finder
 get public video data from youtube. 
 
+## example
+
+```python
+    from video_finder import video_finder
+
+    finder = video_finder.YoutubeFinder("my-api-key")
+    videos = finder.search_videos(search_query="summon python", content_details=True)
+    for v in videos:
+        print(f"{v.title} - {v.duration}")
+```
+TODO: full example
+
 ## supported search parameter 
 
 for all searches:
@@ -36,3 +48,9 @@ only for video searches:
 |    |  videoDimension  |
 | x  |  relatedToVideoId |
 |    |  videoCategoryId |
+
+## TODO
+- [ ] more examples
+- [ ] better tests
+- [ ] parse duration
+- [ ] parse published_at
