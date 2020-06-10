@@ -175,9 +175,7 @@ class YoutubeAPI:
                caption: VideoCaption = None,
                embeddable: VideoEmbeddable = None,
                definition: VideoDefinition = None,
-               related_to_video_id: str = ""
-
-               ) -> Dict[str, Any]:
+               related_to_video_id: str = "") -> Dict[str, Any]:
         """ make /search request to www.googleapis.com/youtube/v3.
             Args:
                 channel_id (str): channel to search in.
@@ -276,13 +274,22 @@ class YoutubeAPI:
 
         return self._request("videos", params)
 
-    def search_all(self, channel_id: str = "", search_query: str = "",
-                   duration: VideoDuration = VideoDuration.ANY,
-                   published_before: datetime = None,
+    def search_all(self,
+                   channel_id: str = "",
+                   search_query: str = "",
+                   order: Order = Order.DATE,
                    published_after: datetime = None,
+                   published_before: datetime = None,
+                   relevance_language: str = "",
+                   result_type: List[ResultType] = (ResultType.VIDEO,),
+                   part='snippet',
+                   # video only
                    event_type: EventType = None,
-                   page_token: str = "",
-                   part: str = "snippet") -> List[Dict[str, Any]]:
+                   duration: VideoDuration = None,
+                   caption: VideoCaption = None,
+                   embeddable: VideoEmbeddable = None,
+                   definition: VideoDefinition = None,
+                   related_to_video_id: str = "") -> List[Dict[str, Any]]:
         """ make a search request to youtube api v3, but returns a list of all
             items, instead of pages.
             returns:
@@ -290,10 +297,14 @@ class YoutubeAPI:
         """
         self._logger.info("Fetching ALL videos data from youtube.")
         search_params = dict(channel_id=channel_id, search_query=search_query,
-                             page_token=page_token, duration=duration,
-                             published_after=published_after,
+                             order=order, published_after=published_after,
                              published_before=published_before,
-                             event_type=event_type, part=part)
+                             relevance_language=relevance_language,
+                             result_type=result_type, part=part,
+                             event_type=event_type, duration=duration,
+                             caption=caption, embeddable=embeddable,
+                             definition=definition,
+                             related_to_video_id=related_to_video_id)
         yt_response = self.search(**search_params)
         videos = []
         while yt_response['items']:
@@ -330,7 +341,7 @@ class YoutubeAPI:
 
     def videos_all(self, video_ids: Tuple[str] = (),
                    part="snippet,contentDetails") -> List[Dict[str, Any]]:
-        """ make a videos request to youtube api v3, but returns a list of all
+        """ make a /videos request to youtube api v3, but returns a list of all
             items, instead of pages.
             Returns:
                 list: of all response['items']. with contentDetails.
@@ -449,22 +460,44 @@ class YoutubeFinder:
     def get_channel(self, channel_id: str) -> YoutubeChannel:
         return self.get_channels((channel_id, ))[0]
 
-    def search_videos(self, channel_id: str = "", search_query: str = "",
-                      content_details: bool = False,
-                      duration: VideoDuration = VideoDuration.ANY,
-                      published_before: datetime = None,
+    def search_videos(self, content_details=False,
+                      # search params
+                      channel_id: str = "",
+                      search_query: str = "",
+                      order: Order = Order.DATE,
                       published_after: datetime = None,
-                      event_type: EventType = None) -> List[YoutubeVideo]:
+                      published_before: datetime = None,
+                      relevance_language: str = "",
+                      event_type: EventType = None,
+                      duration: VideoDuration = None,
+                      caption: VideoCaption = None,
+                      embeddable: VideoEmbeddable = None,
+                      definition: VideoDefinition = None,
+                      related_to_video_id: str = "") -> List[YoutubeVideo]:
         """ Search for videos.
             Args:
-                channel_id (str): channel to search in.
-                search_query (str): search term.
                 content_details (bool): detail information for each video
                     (needs extra requests, default is False).
+                channel_id (str): channel to search in.
+                search_query (str): search term.
+                order (Order): ordering of the search result.
                 published_before (datetime): utc datetime.
                     (ie: datetime.datetime.utcnow())
                 published_after (datetime): utc datetime.
                     (ie: datetime.datetime.utcnow())
+                relevance_language (str): The relevanceLanguage parameter
+                    instructs the API to return search results that are most
+                    relevant to the specified language. The parameter value is
+                    typically an ISO 639-1 two-letter language code.
+                event_type (EventType): broadcast or not?
+                    (only for result_type: video)
+                duration (VideoDuration): (only for result_type: video)
+                caption (VideoCaption)
+                embeddable (VideoEmbeddable)
+                definition (VideoDefinition)
+                related_to_video_id (str): The relatedToVideoId parameter
+                    retrieves a list of videos that are related to the video
+                    that the parameter value identifies.
             Returns:
                 List[YoutubeVideo]:
                     search result containing all matching videos.
@@ -473,10 +506,13 @@ class YoutubeFinder:
         response_items = self._api.search_all(
                             part=part,
                             channel_id=channel_id, search_query=search_query,
-                            duration=duration,
-                            published_before=published_before,
+                            order=order, published_before=published_before,
                             published_after=published_after,
-                            event_type=event_type
+                            relevance_language=relevance_language,
+                            event_type=event_type, duration=duration,
+                            caption=caption, embeddable=embeddable,
+                            definition=definition,
+                            related_to_video_id=related_to_video_id
         )
         if content_details:  # get addtional video data (contentDetails)
             video_ids = [v['id']['videoId'] for v in response_items]
