@@ -1,15 +1,17 @@
-
+import os
 import logging
 from datetime import timedelta
+from datetime import datetime
 import requests
-from video_finder.video_finder import YoutubeAPI
+from video_finder.video_finder import YoutubeAPI, YoutubeFinder
 
 
 logging.basicConfig(level=logging.DEBUG)
 _DEVELOPER_KEY = "fake-dev-key"
-finder = YoutubeAPI(_DEVELOPER_KEY, caching=False,
+api = YoutubeAPI(_DEVELOPER_KEY, caching=False,
                     caching_delay=timedelta(seconds=10.0))
 
+YOUTUBE_API_KEY = os.getenv("YOUTUBE_API_KEY")
 
 class MockResponse:
 
@@ -44,7 +46,7 @@ def test_search(monkeypatch):
             'key': 'fake-dev-key'}
     expected_endpoint = f"{YoutubeAPI.BASE_URL}search"
     _test_params(monkeypatch, expected_params, expected_endpoint)
-    finder.search(search_query=search_query)
+    api.search(search_query=search_query)
 
 
 def test_channles(monkeypatch):
@@ -57,7 +59,7 @@ def test_channles(monkeypatch):
     expected_endpoint = f"{YoutubeAPI.BASE_URL}channels"
 
     _test_params(monkeypatch, expected_params, expected_endpoint)
-    finder.channels(search_for_ids)
+    api.channels(search_for_ids)
     expected_params = {
             'part': 'snippet',
             'maxResults': '5',
@@ -66,7 +68,7 @@ def test_channles(monkeypatch):
             'key': 'fake-dev-key'}
 
     _test_params(monkeypatch, expected_params, expected_endpoint)
-    finder.channels(search_for_ids, max_results=5, page_token="ABC")
+    api.channels(search_for_ids, max_results=5, page_token="ABC")
 
 
 def test_videos(monkeypatch):
@@ -80,7 +82,7 @@ def test_videos(monkeypatch):
 
     expected_endpoint = f"{YoutubeAPI.BASE_URL}videos"
     _test_params(monkeypatch, expected_params, expected_endpoint)
-    finder.videos(search_for_ids)
+    api.videos(search_for_ids)
     expected_params = {
             'part': 'snippet',
             'maxResults': '5',
@@ -89,7 +91,7 @@ def test_videos(monkeypatch):
             'key': 'fake-dev-key'}
 
     _test_params(monkeypatch, expected_params, expected_endpoint)
-    finder.videos(search_for_ids, max_results=5, page_token="ABC",
+    api.videos(search_for_ids, max_results=5, page_token="ABC",
                   part="snippet")
 
 
@@ -103,6 +105,20 @@ def test_channels_all():
 
 def test_videos_all():
     pass
+
+
+class TestYoutubeFinder:
+
+    finder = YoutubeFinder(YOUTUBE_API_KEY)
+
+    def test_search_videos(self):
+        videos = self.finder.search_videos(
+                content_details=True,
+                channel_id="UCBC3nbpRi7ZpM2MwT5HlGZA",
+                search_query="THE CREW2",
+                published_after=datetime.utcnow()
+        )
+        assert len(videos) == 0
 
 
 
