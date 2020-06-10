@@ -112,8 +112,11 @@ class TestYoutubeFinder:
     finder = YoutubeFinder(YOUTUBE_API_KEY)
 
     def test_search_videos(self):
-        """ after now should bring no results, at least
+        """ after now() should bring no results, at least
             in this channel with this search term.
+
+            it seems that sometime published_after not working.
+            youtube rest bug? or wrong formatted datetime?
         """
         videos = self.finder.search_videos(
                 content_details=True,
