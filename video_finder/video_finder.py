@@ -29,7 +29,7 @@ class ResultType(Enum):
     VIDEO = "video"
 
 
-class VideoEmbeddable(Enum):  # NOT USED!
+class VideoEmbeddable(Enum):
     """ The videoEmbeddable parameter lets you to restrict a search to only
         videos that can be embedded into a webpage. If you specify a value
         for this parameter, you must also set the type parameter's value to
@@ -39,7 +39,7 @@ class VideoEmbeddable(Enum):  # NOT USED!
     TRUE = "true"
 
 
-class VideoCaption(Enum):  # NOT USED!
+class VideoCaption(Enum):
     """ The videoCaption parameter indicates whether the API should filter
         video search results based on whether they have captions. If you
         specify a value for this parameter, you must also set the type
@@ -48,6 +48,12 @@ class VideoCaption(Enum):  # NOT USED!
     ANY = "any"
     CLOSEDCAPTION = "closedCaption"  # videos that have caption
     NONE = "none"  # videos that do not have caption
+
+
+class VideoDefinition(Enum):
+    ANY = "any"
+    HIGH = "high"
+    STANDARD = "standard"
 
 
 class Order(Enum):
@@ -65,39 +71,6 @@ class EventType(Enum):
     UPCOMING = "upcoming"
 
 
-# Search Parameter
-# # ALL:
-# x      part(required)
-# x      channelId
-# x      channelType [any, show]
-# x      maxResults
-# x      order
-# x      pageToken
-# x      published_after
-# x      published_befor
-# x      q
-# x      type
-#       
-#       regionCode
-# x      relevanceLanguage
-#       safeSearch [moderate, none, strict]
-#       location
-#       locationRadius
-
-# # VIDEO:
-# x      eventType
-# x      videoCaption
-# x      videoDuration
-# x      videoEmbeddable
-#       videoLicense [any, creativeCommon, youtube]
-#       videoSyndicated [any, true]
-#       videoType [any, episode, movie]
-# x      videoDefinition [any, high, standard]
-#       videoDimension [2d, 3d, any]
-# x      relatedToVideoId
-#       videoCategoryId
-#
-#
 class YoutubeAPIException(Exception):
     def __init__(self, response):
         super().__init__(response['error']['message'])
@@ -185,24 +158,63 @@ class YoutubeAPI:
         self._check_for_errors(response_dict)
         return response_dict
 
-    def search(self, channel_id: str = "", search_query: str = "",
-               order: Order = Order.DATE, max_results: int = 50,
+    def search(self,
+               channel_id: str = "",
+               search_query: str = "",
+               order: Order = Order.DATE,
+               max_results: int = 50,
                published_after: datetime = None,
                published_before: datetime = None,
-               type: List[ResultType] = (ResultType.VIDEO,),
+               relevance_language: str = "",
+               result_type: List[ResultType] = (ResultType.VIDEO,),
+               part='snippet',
+               page_token: str = "",
+               # video only
                event_type: EventType = None,
-               duration: VideoDuration = VideoDuration.ANY,
-               part='snippet', page_token: str = "") -> Dict[str, Any]:
+               duration: VideoDuration = None,
+               caption: VideoCaption = None,
+               embeddable: VideoEmbeddable = None,
+               definition: VideoDefinition = None,
+               related_to_video_id: str = ""
+
+               ) -> Dict[str, Any]:
         """ make /search request to www.googleapis.com/youtube/v3.
-            look at youtube api documentation:
-            https://developers.google.com/youtube/v3/docs/search/list
+            Args:
+                channel_id (str): channel to search in.
+                search_query (str): search term.
+                order (Order): ordering of the search result.
+                max_results: results per page.
+                published_before (datetime): utc datetime.
+                    (ie: datetime.datetime.utcnow())
+                published_after (datetime): utc datetime.
+                    (ie: datetime.datetime.utcnow())
+                relevance_language (str): The relevanceLanguage parameter
+                    instructs the API to return search results that are most
+                    relevant to the specified language. The parameter value is
+                    typically an ISO 639-1 two-letter language code.
+                result_type (ResultType): what resource you searching for.
+                part (str)
+                page_token (str)
+                event_type (EventType): broadcast or not?
+                    (only for result_type: video)
+                duration (VideoDuration): (only for result_type: video)
+                caption (VideoCaption)
+                embeddable (VideoEmbeddable)
+                definition (VideoDefinition)
+                related_to_video_id (str): The relatedToVideoId parameter
+                    retrieves a list of videos that are related to the video
+                    that the parameter value identifies.
+            Returns:
+                dict:
+                    youtube response, see
+                    https://developers.google.com/youtube/v3/docs/search/list#response
         """
 
         params = {
                 'part': part,
                 'order': order.value,
                 'maxResults': max_results,
-                'type': ','.join(map(lambda e: e.value, type)),
+                'type': ','.join(map(lambda e: e.value, result_type)),
         }
 
         if search_query:
@@ -217,12 +229,22 @@ class YoutubeAPI:
             published_after_tz = published_after.astimezone()
             after_rfc3339 = published_after_tz.isoformat()
             params.update({'publishedAfter': after_rfc3339})
+        if relevance_language:
+            params.update({'relevanceLanguage': relevance_language})
         if page_token:
             params.update({'pageToken': page_token})
-        if duration:
-            params.update({'videoDuration': duration.value})
         if event_type:
             params.update({'eventType': event_type.value})
+        if duration:
+            params.update({'videoDuration': duration.value})
+        if caption:
+            params.update({'videoCaption': caption.value})
+        if embeddable:
+            params.update({'videoEmbeddable': embeddable.value})
+        if definition:
+            params.update({'videoDefinition': definition.value})
+        if related_to_video_id:
+            params.update({'relatedToVideoId': related_to_video_id})
 
         return self._request("search", params)
 
