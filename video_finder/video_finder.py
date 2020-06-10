@@ -13,6 +13,24 @@ __all__ = ["VideoDuration", "ResultType", "VideoEmbeddable", "VideoCaption",
            "YoutubeVideo", "YoutubeChannel", "YoutubeFinder"]
 
 
+class ResultType(Enum):
+    """ The type parameter restricts a search query to only retrieve a
+        particular type of resource.
+    """
+    CHANNEL = "channel"
+    PLAYLIST = "playlist"
+    VIDEO = "video"
+
+
+class Order(Enum):
+    DATE = "date"
+    RATING = "rating"
+    RELEVANCE = "relevance"
+    TITLE = "title"
+    VIDEOCOUNT = "videoCount"
+    VIEWCOUNT = "viewCount"
+
+
 class VideoDuration(Enum):
     """ The videoDuration parameter filters video search results based on their
         duration. If you specify a value for this parameter, you must also set
@@ -22,15 +40,6 @@ class VideoDuration(Enum):
     LONG = "long"  # videos longer than 20 mins.
     MEDIUM = "medium"  # videos between 4 and 20 mins.
     SHORT = "short"  # videos less than 4 mins.
-
-
-class ResultType(Enum):
-    """ The type parameter restricts a search query to only retrieve a
-        particular type of resource.
-    """
-    CHANNEL = "channel"
-    PLAYLIST = "playlist"
-    VIDEO = "video"
 
 
 class VideoEmbeddable(Enum):
@@ -58,15 +67,6 @@ class VideoDefinition(Enum):
     ANY = "any"
     HIGH = "high"
     STANDARD = "standard"
-
-
-class Order(Enum):
-    DATE = "date"
-    RATING = "rating"
-    RELEVANCE = "relevance"
-    TITLE = "title"
-    VIDEOCOUNT = "videoCount"
-    VIEWCOUNT = "viewCount"
 
 
 class EventType(Enum):
