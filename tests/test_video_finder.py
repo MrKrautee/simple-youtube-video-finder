@@ -4,12 +4,36 @@ from datetime import timedelta
 from datetime import datetime
 import requests
 from video_finder.video_finder import YoutubeAPI, YoutubeFinder
+from video_finder.video_finder import Order
+from video_finder.video_finder import VideoDuration
+from video_finder.video_finder import VideoEmbeddable, EventType
+from video_finder.video_finder import VideoDefinition, VideoCaption
 
 
 logging.basicConfig(level=logging.DEBUG)
 _DEVELOPER_KEY = "fake-dev-key"
 
 YOUTUBE_API_KEY = os.getenv("YOUTUBE_API_KEY")
+
+search_query = {
+        "exactly_one": dict(
+            channel_id="UCBC3nbpRi7ZpM2MwT5HlGZA",
+            search_query="THE CREW2"),
+        "all_video_params": dict(
+                     channel_id="UCV73LMcuZQfH5If9JBFb43Q",
+                     search_query="Yoga",
+                     order=Order.RATING,
+                     published_before=datetime.utcnow(),
+                     relevance_language="de",
+                     event_type=EventType.COMPLETED,
+                     duration=VideoDuration.ANY,
+                     caption=VideoCaption.ANY,
+                     embeddable=VideoEmbeddable.TRUE,
+                     definition=VideoDefinition.ANY,
+                     related_to_video_id="KkXrClafQYo"
+        )
+
+}
 
 
 class MockResponse:
@@ -35,7 +59,7 @@ def _test_params(monkeypatch, expected_params, expected_endpoint):
 
 class TestYoutubeAPI:
 
-    api = YoutubeAPI("fake-dev-key", caching=False,
+    api = YoutubeAPI(YOUTUBE_API_KEY, caching=False,
                      caching_delay=timedelta(seconds=10.0))
 
     def test_search(self, monkeypatch):
@@ -46,8 +70,7 @@ class TestYoutubeAPI:
                 'q': search_query,
                 'order': 'date',
                 'type': 'video',
-                'videoDuration': 'any',
-                'key': 'fake-dev-key'}
+                'key': YOUTUBE_API_KEY}
         expected_endpoint = f"{YoutubeAPI.BASE_URL}search"
         _test_params(monkeypatch, expected_params, expected_endpoint)
         self.api.search(search_query=search_query)
@@ -59,7 +82,7 @@ class TestYoutubeAPI:
                 'part': 'snippet',
                 'maxResults': '50',
                 'id': ','.join(search_for_ids),
-                'key': 'fake-dev-key'}
+                'key': YOUTUBE_API_KEY}
         expected_endpoint = f"{YoutubeAPI.BASE_URL}channels"
 
         _test_params(monkeypatch, expected_params, expected_endpoint)
@@ -69,7 +92,7 @@ class TestYoutubeAPI:
                 'maxResults': '5',
                 'id': ','.join(search_for_ids),
                 'pageToken': "ABC",
-                'key': 'fake-dev-key'}
+                'key': YOUTUBE_API_KEY}
 
         _test_params(monkeypatch, expected_params, expected_endpoint)
         self.api.channels(search_for_ids, max_results=5, page_token="ABC")
@@ -81,7 +104,7 @@ class TestYoutubeAPI:
                 'part': 'snippet,contentDetails',
                 'maxResults': '50',
                 'id': ','.join(search_for_ids),
-                'key': 'fake-dev-key'}
+                'key': YOUTUBE_API_KEY}
 
         expected_endpoint = f"{YoutubeAPI.BASE_URL}videos"
         _test_params(monkeypatch, expected_params, expected_endpoint)
@@ -91,14 +114,15 @@ class TestYoutubeAPI:
                 'maxResults': '5',
                 'id': ','.join(search_for_ids),
                 'pageToken': "ABC",
-                'key': 'fake-dev-key'}
+                'key': YOUTUBE_API_KEY}
 
         _test_params(monkeypatch, expected_params, expected_endpoint)
         self.api.videos(search_for_ids, max_results=5, page_token="ABC",
                         part="snippet")
 
     def test_search_all(self, monkeypatch):
-        pass
+        videos = self.api.search_all(**search_query['exactly_one'])
+        assert len(videos) == 1
 
     def test_channels_all(self, monkeypatch):
         pass
@@ -125,3 +149,7 @@ class TestYoutubeFinder:
                 published_after=datetime.utcnow()
         )
         assert len(videos) == 0
+
+    def test_search_params(self):
+        videos = self.finder.search_videos(**search_query['all_video_params'])
+        assert len(videos) > 0
