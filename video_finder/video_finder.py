@@ -416,6 +416,7 @@ class YoutubeVideo(ResponseAndapter):
         if self._raw['kind'] == "youtube#video":
             self.fields['video_id'] = ['id']
 
+    @property
     def url(self) -> str:
         return self.URL_BASE + self.video_id
 
@@ -433,6 +434,7 @@ class YoutubeChannel(ResponseAndapter):
             'country': ['country'],
     }
 
+    @property
     def url(self) -> str:
         return self.URL_BASE + self.video_id
 
