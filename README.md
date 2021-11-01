@@ -12,8 +12,8 @@ used in [MrKrautee/video-gatherer](https://github.com/MrKrautee/django-video-gat
     * [search/list](https://developers.google.com/youtube/v3/docs/search/list)
     * [videos/list](https://developers.google.com/youtube/v3/docs/videos/list)
     * [channels/list](https://developers.google.com/youtube/v3/docs/channels/list)
-* option to cache requests for development ('safe quota')
-* option to fetch all search results at once
+* option to cache requests for development ('save quota')
+* option to fetch all search results at once (no pagination)
 * option to include detailed video informations, 'contentDetails' (uses more quota)
 
 ## Usage
