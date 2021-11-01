@@ -4,12 +4,12 @@ get public video data from youtube.
 ## example
 
 ```python
-    from video_finder import video_finder
+from video_finder import video_finder
 
-    finder = video_finder.YoutubeFinder("my-api-key")
-    videos = finder.search_videos(search_query="summon python", content_details=True)
-    for v in videos:
-        print(f"{v.title} - {v.duration}")
+finder = video_finder.YoutubeFinder("my-api-key")
+videos = finder.search_videos(search_query="summon python", content_details=True)
+for v in videos:
+    print(f"{v.title} - {v.duration}")
 ```
 TODO: full example
 
@@ -48,6 +48,12 @@ only for video searches:
 |    |  videoDimension  |
 | x  |  relatedToVideoId |
 |    |  videoCategoryId |
+
+## Run Test
+```bash
+export YOUTUBE_API_KEY=Your-Api-Key-abcdefg
+python -m pytest tests --verbose
+```
 
 ## TODO
 - [ ] more examples
