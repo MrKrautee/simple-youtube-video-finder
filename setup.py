@@ -1,19 +1,12 @@
-from setuptools import setup, find_packages
+from setuptools import setup
 
-version = __import__("video_finder").__version__
+# from requirements-dev.txt
+dev = ['pytest', 'flake8']
 
 setup(
-        name="video_finder",
-        description="get public video data from youtube.",
-        author="Christof Franke",
-        author_email="christof@myway.de",
-        license="GNU General Public License v3.0",
-        platforms=["OS Independent"],
-        packages=find_packages(exclude=["tests"]),
-        include_package_data=True,
-        install_requires=[
-            "requests",
-        ],
-        zip_seafe=False,
+    tests_require=['pytest'],
+    install_requires=[
+        # from requirements.txt
+        'requests'],
+    extra_requires={'dev': dev},
 )
-
