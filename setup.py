@@ -3,7 +3,7 @@ from setuptools import setup, find_packages
 version = __import__("video_finder").__version__
 
 setup(
-        name="simple-youtube-video-finder",
+        name="video_finder",
         description="get public video data from youtube.",
         author="Christof Franke",
         author_email="christof@myway.de",
