@@ -1,5 +1,5 @@
 # simple-youtube-video-finder
-Very simple interface for Youtube API v3, for public video data.
+Very simple interface for Youtube API v3 to fetch public video data.
 No need for OAuth2.0 or many dependencies (needs only `requests`).
 
 Having some auth issues with the official api [googleapis/google-api-python-client](https://github.com/googleapis/google-api-python-client) and just for fun,
