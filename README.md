@@ -35,7 +35,7 @@ Read the code for more details:
 `YoutubeAPI` will return the raw response from the youtube rest api.
 
 As I mentioned, read the sources for further information:
-[video_finder.py](https://github.com/MrKrautee/simple-youtube-video-finder/blob/master/video_finder/video_finder.py)
+[video_finder/video_finder.py](https://github.com/MrKrautee/simple-youtube-video-finder/blob/master/video_finder/video_finder.py)
 
 ### Supported Search Params
 
