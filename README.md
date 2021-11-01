@@ -2,7 +2,7 @@
 Very simple interface for Youtube API v3 to fetch public video data.
 No need for OAuth2.0 or many dependencies (needs only `requests`).
 
-Having some auth issues with the official api [googleapis/google-api-python-client](https://github.com/googleapis/google-api-python-client) and just for fun,
+Having some auth and quota issues with the official python api [googleapis/google-api-python-client](https://github.com/googleapis/google-api-python-client) and just for fun,
 I ended up coding this easy api for my simple needs.
 used in [MrKrautee/video-gatherer](https://github.com/MrKrautee/django-video-gatherer).
 
