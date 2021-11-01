@@ -17,8 +17,8 @@ YOUTUBE_API_KEY = os.getenv("YOUTUBE_API_KEY")
 
 search_query = {
         "exactly_one": dict(
-            channel_id="UC3slESOJpcy6rBYq7v_QAVA",
-            search_query="MrKrautee"),
+            channel_id="UC4ixAu7SMqHz6n-rtjsgAtA",
+            search_query="Musikvideo Sicherheitskonferenz"),
         "all_video_params": dict(
                      channel_id="UCV73LMcuZQfH5If9JBFb43Q",
                      search_query="Yoga",
