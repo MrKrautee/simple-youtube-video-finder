@@ -1,7 +1,22 @@
 # simple-youtube-video-finder
-get public video data from youtube. 
+Very simple interface for Youtube API v3, for public video data.
+No need for OAuth2.0 or many dependencies (needs only `requests`).
 
-## example
+Having some auth issues with the official api [googleapis/google-api-python-client](https://github.com/googleapis/google-api-python-client) and just for fun,
+I ended up coding this easy api for my simple needs.
+used in [MrKrautee/video-gatherer](https://github.com/MrKrautee/django-video-gatherer).
+
+## Features
+* fetches public youtube video data
+* implements following endpoints:
+    * [search/list](https://developers.google.com/youtube/v3/docs/search/list)
+    * [videos/list](https://developers.google.com/youtube/v3/docs/videos/list)
+    * [channels/list](https://developers.google.com/youtube/v3/docs/channels/list)
+* option to cache requests for development ('safe quota')
+* option to fetch all search results at once
+* option to include detailed video informations, 'contentDetails' (uses more quota)
+
+## Usage
 
 ```python
 from video_finder import video_finder
@@ -11,9 +26,18 @@ videos = finder.search_videos(search_query="summon python", content_details=True
 for v in videos:
     print(f"{v.title} - {v.duration}")
 ```
-TODO: full example
+Read the code for more details:
 
-## supported search parameter 
+`YoutubeFinder` will return those types in a list:
+* [Video Return Type](https://github.com/MrKrautee/simple-youtube-video-finder/blob/46aa8bfeaa993be3edfd34e23237879ce19afeeb/video_finder/video_finder.py#L394) 
+* [Channel Return Type](https://github.com/MrKrautee/simple-youtube-video-finder/blob/46aa8bfeaa993be3edfd34e23237879ce19afeeb/video_finder/video_finder.py#L424)
+
+`YoutubeAPI` will return the raw response from the youtube rest api.
+
+As I mentioned, read the sources for further information:
+[video_finder.py](https://github.com/MrKrautee/simple-youtube-video-finder/blob/master/video_finder/video_finder.py)
+
+### Supported Search Params
 
 for all searches:
 |supported ?| param name|
@@ -49,14 +73,14 @@ only for video searches:
 | x  |  relatedToVideoId |
 |    |  videoCategoryId |
 
-## Run Test
+## Development
+### Run Tests
 ```bash
-export YOUTUBE_API_KEY=Your-Api-Key-abcdefg
-python -m pytest tests --verbose
+$ export YOUTUBE_API_KEY=Your-Api-Key-abcdefg
+$ python -m pytest tests --verbose
 ```
 
-## TODO
-- [ ] more examples
-- [ ] better tests
-- [ ] parse duration
-- [ ] parse published_at
+## Resources
+* [YouTube Data API v3 Documentation](https://developers.google.com/youtube/v3/docs)
+* [Developer Console](https://console.developers.google.com/) to get yout API
+  key
